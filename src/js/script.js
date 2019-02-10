@@ -1,0 +1,1 @@
+console.log('%c Build succesful ', 'color: #58c93c');
