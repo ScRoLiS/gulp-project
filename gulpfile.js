@@ -1,62 +1,179 @@
-const gulp = require("gulp");
-const del = require("del");
-const less = require("gulp-less");
-const minify = require("gulp-minify-css");
-const server = require("browser-sync").create();
-
+const gulp 			= require("gulp");
+const del 			= require("del");
+const sass 			= require("gulp-sass");
+const mmq 			= require('gulp-merge-media-queries');
+const minify 		= require("gulp-minify-css");
+const imagemin 		= require('gulp-imagemin');
+const autoprefixer 	= require('gulp-autoprefixer');
+const server 		= require("browser-sync").create();
 const path = {
-  styles: 'src/styles/style.less',
-  html: 'src/**/*.html',
-  scripts: 'src/scripts/**/*.*',
-  assets: 'src/assets/**/*.*'
+	style: [
+		"src/sass/**/*.sass",
+		"src/scss/**/*.scss"
+	],
+	fonts: [
+		"src/fonts/**/*.woff",
+		"src/fonts/**/*.woff2",
+		"src/fonts/**/*.ttf"
+	],
+	html: "src/**/*.html",
+	scripts: "src/js/**/*.js",
+	images: ["src/img/**/*.png", "src/img/**/*.jpg", "src/img/**/*.svg"]
 };
 
-gulp.task('stylize', function() {
-  return gulp
-    .src(path['styles'])
-    .pipe(less())
-    .pipe(minify())
-    .pipe(gulp.dest('build/css/'))
-    .pipe(server.stream());
+sass.compiler = require("node-sass");
+
+
+
+/**
+ * Compile SASS/SCSS
+ */
+
+gulp.task("stylize:build", function() {
+	console.log();
+	return gulp
+		.src(path["style"])
+		.pipe(sass())
+		.pipe(autoprefixer({
+			browsers: ['last 2 versions'],
+			cascade: false
+		  }))
+		.pipe(mmq())
+		.pipe(minify())
+		.pipe(gulp.dest("build/css/"));
 });
 
-gulp.task('markup', function() {
-  return 	gulp.src(path['html'], {base : 'src/'})
-          .pipe(gulp.dest('build/'));
+gulp.task("stylize:dev", function() {
+	return gulp
+		.src(path["style"])
+		.pipe(sass())
+		.pipe(gulp.dest("build/css/"))
+		.pipe(server.stream());
 });
 
-gulp.task('scripts', function() {
-  return 	gulp.src(path['scripts'])
-          .pipe(gulp.dest('build/js/'));
+
+
+/**
+ * Copying HTML
+ */
+
+gulp.task("html", function() {
+	return gulp
+		.src(path["html"], { base: "src/" })
+		.pipe(gulp.dest("build/"));
 });
 
-gulp.task('copy', function() {
-  return  gulp.src(path['assets'])
-          .pipe(gulp.dest('build/'));
+
+
+/**
+ * Copying scripts
+ */
+
+gulp.task("scripts", function() {
+	return gulp
+		.src(path["scripts"], {base: 'src/'})
+		.pipe(gulp.dest("build/"));
 });
 
-gulp.task('clean', function() {
-  return  del(['build/']);
+
+
+/**
+ * Optimize images
+ */
+
+gulp.task("images:build", function() {
+	return gulp
+		.src(path["images"], {base: 'src/'})
+		.pipe(imagemin())
+		.pipe(gulp.dest("build/"));
 });
 
-gulp.task('serve', function(done) {
-  server.init({
-    server: 'build/'
-  });
-  done();
+gulp.task("images:dev", function() {
+	return gulp
+		.src(path["images"], {base: 'src/'})
+		.pipe(gulp.dest("build/"));
 });
 
-gulp.task('reload', function(done){
-  server.reload();
-  done();
+
+
+/**
+ * Copying fonts
+ */
+
+gulp.task("fonts", function() {
+	return gulp
+		.src(path["fonts"], {base: 'src/'})
+		.pipe(gulp.dest("build/"));
 });
 
-gulp.task('watch', function(done) {
-  gulp.watch('src/styles/**/*.less', gulp.parallel('stylize'));
-  gulp.watch(path['html'], gulp.series('markup', 'reload'));
-  gulp.watch(path['scripts'], gulp.series('scripts'));
-  gulp.watch(path['assets'], gulp.parallel('copy'));
-  done();
+
+
+/**
+ * Remove old build
+ */
+
+gulp.task("clean", function() {
+	return del(["build/"]);
 });
 
-gulp.task('build', gulp.series('clean', 'stylize', 'markup', 'scripts', 'copy', 'serve', 'watch'));
+
+
+/**
+ * Run browsercync server
+ */
+
+gulp.task("serve:dev", function(done) {
+	server.init({
+		server: "build/"
+	});
+	done();
+});
+
+gulp.task("reload:dev", function(done) {
+	server.reload();
+	done();
+});
+
+
+
+/**
+ * File watchers
+ */
+
+gulp.task("watch:dev", function(done) {
+	gulp.watch(path['style'], gulp.parallel("stylize:dev"));
+	gulp.watch(path["html"], gulp.series("html", "reload:dev"));
+	gulp.watch(path["scripts"], gulp.series("scripts"));
+	gulp.watch(path["images"], gulp.parallel("images:dev"));
+	gulp.watch(path["fonts"], gulp.parallel("fonts"));
+	done();
+});
+
+
+
+
+gulp.task(
+	"dev",
+	gulp.series(
+		"clean",
+		"html",
+		"scripts",
+		"fonts",
+		"stylize:dev",
+		"images:dev",
+		"watch:dev",
+		"serve:dev"
+	)
+);
+
+gulp.task(
+	"build",
+	gulp.series(
+		"clean",
+		"html",
+		"scripts",
+		"fonts",
+		"stylize:build",
+		"images:build"
+	)
+);
