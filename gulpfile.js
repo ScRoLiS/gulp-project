@@ -16,9 +16,13 @@ const path = {
 		"src/fonts/**/*.woff2",
 		"src/fonts/**/*.ttf"
 	],
+	images: [
+		"src/img/**/*.png",
+		"src/img/**/*.jpg",
+		"src/img/**/*.svg"
+	],
 	html: "src/**/*.html",
-	scripts: "src/js/**/*.js",
-	images: ["src/img/**/*.png", "src/img/**/*.jpg", "src/img/**/*.svg"]
+	scripts: "src/js/**/*.js"
 };
 
 sass.compiler = require("node-sass");
