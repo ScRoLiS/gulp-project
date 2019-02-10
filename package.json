@@ -1,18 +1,17 @@
 {
-  "name": "gulp-project-template",
+  "name": "gulp-project",
   "version": "1.0.0",
   "description": "Базовый шаблон для верстки",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "gulp dev",
     "build": "gulp build"
   },
   "author": "ScRoLiS",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/ScRoLiS/gulp-project-template/issues"
+    "url": "https://github.com/ScRoLiS/gulp-project/issues"
   },
-  "homepage": "https://github.com/ScRoLiS/gulp-project-template#readme",
+  "homepage": "https://github.com/ScRoLiS/gulp-project#readme",
   "devDependencies": {
     "browser-sync": "^2.26.3",
     "del": "^3.0.0",
