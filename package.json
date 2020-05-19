@@ -2,10 +2,6 @@
   "name": "gulp-project",
   "version": "1.0.0",
   "description": "Базовый шаблон для верстки",
-  "scripts": {
-    "dev": "gulp dev",
-    "build": "gulp build"
-  },
   "author": "ScRoLiS",
   "license": "ISC",
   "bugs": {
