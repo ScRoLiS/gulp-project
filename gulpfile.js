@@ -58,7 +58,6 @@ function css() {
     .pipe(
       scss({
         outputStyle: "expanded",
-        includePaths: require("node-normalize-scss").includePaths
       })
     )
     .pipe(
