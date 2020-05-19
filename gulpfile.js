@@ -1,183 +1,124 @@
-const gulp 			= require("gulp");
-const del 			= require("del");
-const sass 			= require("gulp-sass");
-const mmq 			= require('gulp-merge-media-queries');
-const minify 		= require("gulp-minify-css");
-const imagemin 		= require('gulp-imagemin');
-const autoprefixer 	= require('gulp-autoprefixer');
-const server 		= require("browser-sync").create();
+const project_folder = "dist";
+const source_folder = "src";
+const gulp = require("gulp");
+const del = require("del");
+const scss = require('gulp-sass');
+const browsersync = require("browser-sync").create();
+const autoPrefixer = require("gulp-autoprefixer");
+const cleanCSS = require('gulp-clean-css');
+const rename = require("gulp-rename");
+const groupQueries = require("gulp-group-css-media-queries");
+const ttf2woff = require("gulp-ttf2woff");
+const ttf2woff2 = require("gulp-ttf2woff2");
+const imagemin = require("gulp-imagemin");
+const { src, dest } = require("gulp");
+
 const path = {
-	style: [
-		"src/sass/**/*.sass",
-		"src/scss/**/*.scss"
-	],
-	fonts: [
-		"src/fonts/**/*.woff",
-		"src/fonts/**/*.woff2",
-		"src/fonts/**/*.ttf"
-	],
-	images: [
-		"src/img/**/*.png",
-		"src/img/**/*.jpg",
-		"src/img/**/*.svg"
-	],
-	html: "src/**/*.html",
-	scripts: "src/js/**/*.js"
-};
+	build: {
+		html: project_folder + "/",
+		css: project_folder + "/css/",
+		js: project_folder + "/js/",
+		img: project_folder + "/img/",
+		fonts: project_folder + "/fonts/",
+	},
+	src: {
+		html: source_folder + "/html/*.html",
+		scss: source_folder + "/scss/style.scss",
+		js: source_folder + "/js/script.js",
+		img: source_folder + "/img/**/*.{jpg,png,svg,gif,ico,webp}",
+		fonts: source_folder + "/fonts/*.ttf",
+	},
+	watch: {
+		html: source_folder + "/html/**/*.html",
+		scss: source_folder + "/scss/**/*.scss",
+		js: source_folder + "/js/**/*.js",
+		img: source_folder + "/img/**/*.{jpg,png,svg,gif,ico,webp}"
+  },
+  clean: "./" + project_folder + "/"
+}
 
-sass.compiler = require("node-sass");
+function browserSync() {
+  browsersync.init({
+    server: {
+      baseDir: "./" + project_folder + "/"
+    },
+    port: 3000,
+    notify: false
+  });
+}
 
+function html() {
+  return src(path.src.html)
+    .pipe(dest(path.build.html))
+    .pipe(browsersync.stream());
+}
 
+function css() {
+  return src(path.src.scss)
+    .pipe(
+      scss({
+        outputStyle: "expanded",
+        includePaths: require("node-normalize-scss").includePaths
+      })
+    )
+    .pipe(
+      autoPrefixer({
+      overrideBrowserslist: ["last 5 versions"],
+      cascade: true
+      })
+    )
+    .pipe(groupQueries())
+    .pipe(dest(path.build.css))
+    .pipe(
+      rename({
+        extname: ".min.css"
+      })
+    )
+    .pipe(cleanCSS())
+    .pipe(dest(path.build.css))
+    .pipe(browsersync.stream());
+}
 
-/**
- * Compile SASS/SCSS
- */
+function images() {
+  return src(path.src.img)
+    .pipe(
+      imagemin({
+        progressive: true,
+        svgoPlugins: [{ removeViewBox: false }],
+        interlaced: true,
+        optimizationLevel: 3
+      })
+    )
+    .pipe(dest(path.build.img))
+    .pipe(browsersync.stream());
+}
 
-gulp.task("stylize:build", function() {
-	console.log();
-	return gulp
-		.src(path["style"])
-		.pipe(sass())
-		.pipe(autoprefixer({
-			browsers: ['last 2 versions'],
-			cascade: false
-		  }))
-		.pipe(mmq())
-		.pipe(minify())
-		.pipe(gulp.dest("build/css/"));
-});
+function fonts() {
+  src(path.src.fonts)
+    .pipe(ttf2woff())
+    .pipe(dest(path.build.fonts));
+  return src(path.src.fonts)
+    .pipe(ttf2woff2())
+    .pipe(dest(path.build.fonts));
+}
 
-gulp.task("stylize:dev", function() {
-	return gulp
-		.src(path["style"])
-		.pipe(sass())
-		.pipe(gulp.dest("build/css/"))
-		.pipe(server.stream());
-});
+function clean() {
+  return del(path.clean);
+}
 
+function watchFiles(cb) {
+  gulp.watch([path.watch.html], html);
+  gulp.watch([path.watch.scss], css);
+  gulp.watch([path.watch.img], images);
+}
 
+const build = gulp.series(clean, gulp.parallel(css, html, images, fonts));
+const watch = gulp.parallel(build, watchFiles, browserSync);
 
-/**
- * Copying HTML
- */
-
-gulp.task("html", function() {
-	return gulp
-		.src(path["html"], { base: "src/" })
-		.pipe(gulp.dest("build/"));
-});
-
-
-
-/**
- * Copying scripts
- */
-
-gulp.task("scripts", function() {
-	return gulp
-		.src(path["scripts"], {base: 'src/'})
-		.pipe(gulp.dest("build/"));
-});
-
-
-
-/**
- * Optimize images
- */
-
-gulp.task("images:build", function() {
-	return gulp
-		.src(path["images"], {base: 'src/'})
-		.pipe(imagemin())
-		.pipe(gulp.dest("build/"));
-});
-
-gulp.task("images:dev", function() {
-	return gulp
-		.src(path["images"], {base: 'src/'})
-		.pipe(gulp.dest("build/"));
-});
-
-
-
-/**
- * Copying fonts
- */
-
-gulp.task("fonts", function() {
-	return gulp
-		.src(path["fonts"], {base: 'src/'})
-		.pipe(gulp.dest("build/"));
-});
-
-
-
-/**
- * Remove old build
- */
-
-gulp.task("clean", function() {
-	return del(["build/"]);
-});
-
-
-
-/**
- * Run browsercync server
- */
-
-gulp.task("serve:dev", function(done) {
-	server.init({
-		server: "build/"
-	});
-	done();
-});
-
-gulp.task("reload:dev", function(done) {
-	server.reload();
-	done();
-});
-
-
-
-/**
- * File watchers
- */
-
-gulp.task("watch:dev", function(done) {
-	gulp.watch(path['style'], gulp.parallel("stylize:dev"));
-	gulp.watch(path["html"], gulp.series("html", "reload:dev"));
-	gulp.watch(path["scripts"], gulp.series("scripts"));
-	gulp.watch(path["images"], gulp.parallel("images:dev"));
-	gulp.watch(path["fonts"], gulp.parallel("fonts"));
-	done();
-});
-
-
-
-
-gulp.task(
-	"dev",
-	gulp.series(
-		"clean",
-		"html",
-		"scripts",
-		"fonts",
-		"stylize:dev",
-		"images:dev",
-		"watch:dev",
-		"serve:dev"
-	)
-);
-
-gulp.task(
-	"build",
-	gulp.series(
-		"clean",
-		"html",
-		"scripts",
-		"fonts",
-		"stylize:build",
-		"images:build"
-	)
-);
+exports.fonts = fonts;
+exports.images = images;
+exports.css = css;
+exports.html = html;
+exports.build = build;
+exports.watch = watch;
+exports.default = watch;
