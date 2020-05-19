@@ -4,6 +4,7 @@ const gulp = require("gulp");
 const del = require("del");
 const scss = require('gulp-sass');
 const browsersync = require("browser-sync").create();
+const plumber = require("gulp-plumber");
 const autoPrefixer = require("gulp-autoprefixer");
 const cleanCSS = require('gulp-clean-css');
 const rename = require("gulp-rename");
@@ -53,8 +54,9 @@ function html() {
     .pipe(browsersync.stream());
 }
 
-function css() {
-  return src(path.src.scss)
+function css(done) {
+  src(path.src.scss)
+  // .pipe(plumber())
     .pipe(
       scss({
         outputStyle: "expanded",
@@ -62,8 +64,8 @@ function css() {
     )
     .pipe(
       autoPrefixer({
-      overrideBrowserslist: ["last 5 versions"],
-      cascade: true
+        overrideBrowserslist: ["last 5 versions"],
+        cascade: true
       })
     )
     .pipe(groupQueries())
@@ -74,8 +76,9 @@ function css() {
       })
     )
     .pipe(cleanCSS())
-    .pipe(dest(path.build.css))
-    .pipe(browsersync.stream());
+    .pipe(dest(path.build.css));
+  browsersync.reload();
+  done();
 }
 
 function images() {
