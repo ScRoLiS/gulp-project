@@ -56,7 +56,7 @@ function html() {
 
 function css(done) {
   src(path.src.scss)
-  // .pipe(plumber())
+    .pipe(plumber())
     .pipe(
       scss({
         outputStyle: "expanded",
