@@ -7,6 +7,10 @@
   "bugs": {
     "url": "https://github.com/ScRoLiS/gulp-project/issues"
   },
+  "scripts": {
+    "start": "gulp watch",
+    "build": "gulp build"
+  },
   "homepage": "https://github.com/ScRoLiS/gulp-project#readme",
   "devDependencies": {
     "browser-sync": "^2.26.7",
