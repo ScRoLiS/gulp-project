@@ -2,7 +2,7 @@ const project_folder = "dist";
 const source_folder = "src";
 const gulp = require("gulp");
 const del = require("del");
-const scss = require('gulp-sass');
+const sass = require('gulp-sass');
 const browsersync = require("browser-sync").create();
 const plumber = require("gulp-plumber");
 const autoPrefixer = require("gulp-autoprefixer");
@@ -15,25 +15,27 @@ const imagemin = require("gulp-imagemin");
 const { src, dest } = require("gulp");
 
 const path = {
-	build: {
-		html: project_folder + "/",
-		css: project_folder + "/css/",
-		js: project_folder + "/js/",
-		img: project_folder + "/img/",
-		fonts: project_folder + "/fonts/",
-	},
-	src: {
-		html: source_folder + "/html/*.html",
-		scss: source_folder + "/scss/style.scss",
-		js: source_folder + "/js/script.js",
-		img: source_folder + "/img/**/*.{jpg,png,svg,gif,ico,webp}",
-		fonts: source_folder + "/fonts/*.{ttf,woff,woff2}",
-	},
-	watch: {
-		html: source_folder + "/html/**/*.html",
-		scss: source_folder + "/scss/**/*.scss",
-		js: source_folder + "/js/**/*.js",
-		img: source_folder + "/img/**/*.{jpg,png,svg,gif,ico,webp}"
+  build: {
+    html: project_folder + "/",
+    css: project_folder + "/css/",
+    js: project_folder + "/js/",
+    img: project_folder + "/img/",
+    fonts: project_folder + "/fonts/",
+  },
+  src: {
+    html: source_folder + "/html/*.html",
+    scss: source_folder + "/scss/style.scss",
+    style: source_folder + "/style/**/*.css",
+    js: source_folder + "/js/script.js",
+    img: source_folder + "/img/**/*.{jpg,png,svg,gif,ico,webp}",
+    fonts: source_folder + "/fonts/*.{ttf,woff,woff2}",
+  },
+  watch: {
+    html: source_folder + "/html/**/*.html",
+    scss: source_folder + "/scss/**/*.scss",
+    style: source_folder + "/style/**/*.css",
+    js: source_folder + "/js/**/*.js",
+    img: source_folder + "/img/**/*.{jpg,png,svg,gif,ico,webp}"
   },
   clean: "./" + project_folder + "/"
 }
@@ -60,11 +62,18 @@ function js() {
     .pipe(browsersync.stream());
 }
 
-function css(done) {
+function style(done) {
+  src(path.src.style)
+    .pipe(dest(path.build.css));
+  browsersync.reload();
+  done();
+}
+
+function scss(done) {
   src(path.src.scss)
     .pipe(plumber())
     .pipe(
-      scss({
+      sass({
         outputStyle: "expanded",
       })
     )
@@ -116,18 +125,20 @@ function clean() {
 
 function watchFiles(cb) {
   gulp.watch([path.watch.html], html);
-  gulp.watch([path.watch.scss], css);
+  gulp.watch([path.watch.scss], scss);
+  gulp.watch([path.watch.style], style);
   gulp.watch([path.watch.img], images);
   gulp.watch([path.watch.js], js);
 }
 
-const build = gulp.series(clean, gulp.parallel(css, html, js, images, fonts));
+const build = gulp.series(clean, gulp.parallel(scss, style, html, js, images, fonts));
 const watch = gulp.parallel(build, watchFiles, browserSync);
 
 exports.js = js;
 exports.fonts = fonts;
 exports.images = images;
-exports.css = css;
+exports.scss = scss;
+exports.style = style;
 exports.html = html;
 exports.build = build;
 exports.watch = watch;
